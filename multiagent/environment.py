@@ -4,6 +4,8 @@ from gym.envs.registration import EnvSpec
 import numpy as np
 from multiagent.multi_discrete import MultiDiscrete
 from multiagent.core import Agent, Landmark
+import random
+import pdb
 
 # environment for all agents in the multiagent world
 # currently code assumes that no agents will be created/destroyed at runtime!
@@ -119,6 +121,26 @@ class MultiAgentEnv(gym.Env):
     #     for agent in self.agents:
     #         obs_n.append(self._get_obs(agent))
     #     return obs_n
+
+    def new_starts_obs(self, starts, now_agent_num, seed):
+        random.seed(seed)
+        rou_index = random.sample(range(len(starts)),1)[0]
+        rou = starts[rou_index]
+        # pdb.set_trace()
+        for i, agent in enumerate(self.agents):
+            agent.state.p_pos = rou[i]
+            agent.state.p_vel = np.zeros(self.world.dim_p)
+            agent.state.c = np.zeros(self.world.dim_c)
+        for i, landmark in enumerate(self.world.landmarks):
+            landmark.state.p_pos = rou[i+now_agent_num]
+            landmark.state.p_vel = np.zeros(self.world.dim_p)
+        self._reset_render()
+        obs_n = []
+        for agent in self.agents:
+            obs_n.append(self._get_obs(agent))
+        return obs_n, rou_index
+
+
     def init_set(self, now_agent_num):
         for agent in self.agents:
             agent.state.p_pos = np.random.uniform(-3, +3, self.world.dim_p)
